@@ -37,11 +37,13 @@ function uint8tohex (arr) {
 const timeout = ms => new Promise(resolve => setTimeout(resolve, ms))
 const srv = { listener: process.env.BAT_LEDGER_SERVER || 'https://ledger-staging.mercury.basicattentiontoken.org' }
 
-test('create a surveyor', async t => {
-  t.plan(0)
-  const url = '/v2/surveyor/contribution'
-  const data = {'adFree': {'fee': {'USD': 5}, 'votes': 5, 'altcurrency': 'BAT', 'probi': '27116311373482831368'}}
-  await request(srv.listener).post(url).set('Authorization', 'Bearer foobarfoobar').send(data).expect(ok)
+test('check verification status of new publisher', async t => {
+  const eyeshade = process.env.BAT_EYESHADE_SERVER
+  // /v1/publishers/{publisher}/verify
+  const url = `/v1/publishers/${encodeURIComponent(publisher)}/verify`
+  const result = await request(eyeshade).get(url)
+  const { body } = result
+  console.log(body)
 })
 
 test('create a promotion', async t => {
