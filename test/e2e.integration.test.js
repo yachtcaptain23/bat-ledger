@@ -38,7 +38,6 @@ test('ledger: create a surveyor', async t => {
     'altcurrency': 'BAT',
     'probi': new BigNumber(suggestedVotes * voteExchangeRate).times('1e18').toString()
   }}
-
   await ledgerAgent.post(url).send(data).expect(ok)
 })
 
