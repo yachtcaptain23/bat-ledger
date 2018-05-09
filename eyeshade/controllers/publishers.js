@@ -959,7 +959,11 @@ const getToken = async (request, reply, runtime, owner, publisher, backgroundP) 
     }
   }
 
-  reply({ status: 'failure' })
+  debug('deferring to publishers', { publisher })
+  const {
+    PUBLISHERS_URL = 'https://publishers-staging.basicattentiontoken.org'
+  } = process.env
+  await reply.redirect(`${PUBLISHERS_URL}/api/channels/${publisher}/verification_status`)
 }
 
 const hints = {
