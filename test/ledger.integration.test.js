@@ -38,12 +38,13 @@ const timeout = ms => new Promise(resolve => setTimeout(resolve, ms))
 const srv = { listener: process.env.BAT_LEDGER_SERVER || 'https://ledger-staging.mercury.basicattentiontoken.org' }
 
 test('check verification status of new publisher', async t => {
+  t.plan(1)
   const eyeshade = process.env.BAT_EYESHADE_SERVER
-  // /v1/publishers/{publisher}/verify
-  const url = `/v1/publishers/${encodeURIComponent(publisher)}/verify`
+  const encodedPub = encodeURIComponent(publisher)
+  const url = `/v1/publishers/${encodedPub}/verify`
   const result = await request(eyeshade).get(url)
-  const { body } = result
-  console.log(body)
+  const firstCheckBody = result.body
+  t.is(firstCheckBody.status, 'failure')
 })
 
 test('create a promotion', async t => {
