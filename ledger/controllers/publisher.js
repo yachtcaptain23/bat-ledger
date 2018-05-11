@@ -6,10 +6,13 @@ const Joi = require('joi')
 const batPublisher = require('bat-publisher')
 const underscore = require('underscore')
 const uuid = require('uuid')
+const querystring = require('querystring')
 
 const utils = require('bat-utils')
 const braveHapi = utils.extras.hapi
 const braveJoi = utils.extras.joi
+
+const PUBLISHERS_URL = process.env.PUBLISHERS_URL
 
 const v1 = {}
 const v2 = {}
@@ -444,49 +447,15 @@ v2.identity =
 v3.identity =
 { handler: (runtime) => {
   return async (request, reply) => {
-    const publisher = request.query.publisher
-    const location = 'https://' + publisher
-    const debug = braveHapi.debug(module, request)
-    const publishers = runtime.database.get('publishersX', debug)
-    let result, timestamp
-    let entry = await rulesetEntryV2(request, runtime)
-
-    try {
-      result = batPublisher.getPublisherProps(publisher)
-      if (!result) return reply(boom.notFound())
-
-      if (!result.publisherType) {
-        result = underscore.omit(result, underscore.keys(url.parse(location, true)), [ 'URL' ])
-        result.publisher = batPublisher.getPublisher(location, entry.ruleset)
-        if (!result.publisher) return reply(boom.notFound())
-      }
-
-      result.properties = {}
-      underscore.extend(result, await identity(debug, runtime, result))
-
-      if (result.timestamp) {
-        result.properties.timestamp = result.timestamp
-        delete result.timestamp
-      }
-
-      entry = await publishers.findOne({ publisher: result.publisher })
-      if (entry) {
-        timestamp = entry.timestamp.toString()
-
-        if ((timestamp) && ((!result.properties.timestamp) || (timestamp > result.properties.timestamp))) {
-          result.properties.timestamp = timestamp
-        }
-        if (entry.verified) result.properties.verified = entry.verified
-      }
-
-      reply(result)
-    } catch (ex) {
-      reply(boom.badData(ex.toString()))
-    }
+    const {
+      query
+    } = request
+    const stringified = querystring.stringify(query)
+    return reply.redirect(`${PUBLISHERS_URL}/api/channels/identity?${stringified}`)
   }
 },
 
-  description: 'Returns information about a publisher identity',
+  description: 'Returns information about a publisher identity (redirecting to publishers)',
   tags: [ 'api' ],
 
   validate:
