@@ -103,7 +103,7 @@ const connectEyeshadeDb = async (t) => {
 }
 
 const cleanEyeshadeDb = async (t) => {
-  const collections = ['owners', 'publishers', 'tokens']
+  const collections = ['owners', 'publishers']
   const db = t.context.db
   await forEachCollection(db, collections, removeCollection)
   await forEachCollection(db, collections, (collection, name) => {
