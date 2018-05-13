@@ -243,6 +243,7 @@ const write = function (runtime, apiVersion) {
 
     surveyor = await surveyors.findOne({ surveyorId: surveyorId })
     if (!surveyor) return reply(boom.notFound('no such surveyor: ' + surveyorId))
+    if (surveyor && surveyor.frozen) return reply(boom.badData('surveyor is frozen: ' + surveyorId))
 
     if (!surveyor.cohorts) {
       if (surveyor.surveyors) { // legacy surveyor, no cohort support

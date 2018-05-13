@@ -55,11 +55,13 @@ exports.initialize = async (debug, runtime) => {
      // added during report runs...
         inputs: bson.Decimal128.POSITIVE_ZERO,
         fee: bson.Decimal128.POSITIVE_ZERO,
-        quantum: 0
+        quantum: 0,
+     // the surveyor is no longer accepting votes
+        frozen: false
       },
       unique: [ { surveyorId: 1 } ],
       others: [ { surveyorType: 1 }, { votes: 1 }, { counts: 1 }, { altcurrency: 1 }, { probi: 1 }, { timestamp: 1 },
-                { inputs: 1 }, { fee: 1 }, { quantum: 1 } ]
+                { inputs: 1 }, { fee: 1 }, { quantum: 1 }, { frozen: 1 } ]
     },
     {
       category: runtime.database.get('contributions', debug),
@@ -109,9 +111,11 @@ exports.initialize = async (debug, runtime) => {
      // v2 and later
         altcurrency: '',
         probi: bson.Decimal128.POSITIVE_ZERO
+     // votes rejected because the surveyor was frozen
+        rejectedCounts: 0,
       },
       unique: [ { surveyorId: 1, publisher: 1, cohort: 1 } ],
-      others: [ { counts: 1 }, { timestamp: 1 },
+      others: [ { counts: 1 }, { rejectedCounts: 1 }, { timestamp: 1 },
                 { exclude: 1 }, { hash: 1 }, { counts: 1 },
                 { altcurrency: 1, probi: 1 },
                 { altcurrency: 1, exclude: 1, probi: 1 },
@@ -258,15 +262,25 @@ exports.workers = {
       const publisher = payload.publisher
       const surveyorId = payload.surveyorId
       const cohort = payload.cohort || 'control'
+      const surveyors = runtime.database.get('surveyors', debug)
       const voting = runtime.database.get('voting', debug)
       let state
 
       if (!publisher) throw new Error('no publisher specified')
 
-      state = {
-        $currentDate: { timestamp: { $type: 'timestamp' } },
-        $inc: { counts: 1 },
-        $set: { exclude: runtime.config.testingCohorts.includes(cohort) }
+      const surveyor = await surveyors.findOne({ surveyorId })
+      if (surveyor && surveyor.frozen) {
+        state = {
+          $currentDate: { timestamp: { $type: 'timestamp' } },
+          $inc: { rejectedCounts: 1 },
+          $set: { exclude: runtime.config.testingCohorts.includes(cohort) }
+        }
+      } else {
+        state = {
+          $currentDate: { timestamp: { $type: 'timestamp' } },
+          $inc: { counts: 1 },
+          $set: { exclude: runtime.config.testingCohorts.includes(cohort) }
+        }
       }
       await voting.update({ surveyorId: surveyorId, publisher: publisher, cohort: cohort }, state, { upsert: true })
     },

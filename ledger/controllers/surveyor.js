@@ -506,9 +506,9 @@ module.exports.initialize = async (debug, runtime) => {
       category: surveyors,
       name: 'surveyors',
       property: 'surveyorId',
-      empty: { surveyorId: '', surveyorType: '', active: false, available: false, payload: {}, timestamp: bson.Timestamp.ZERO },
+      empty: { surveyorId: '', surveyorType: '', active: false, available: false, frozen: false, payload: {}, timestamp: bson.Timestamp.ZERO },
       unique: [ { surveyorId: 1 } ],
-      others: [ { surveyorType: 1 }, { active: 1 }, { available: 1 }, { timestamp: 1 } ]
+      others: [ { surveyorType: 1 }, { active: 1 }, { available: 1 }, { frozen: 1 }, { timestamp: 1 } ]
     },
     {
       category: runtime.database.get('submissions', debug),
