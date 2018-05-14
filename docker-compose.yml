@@ -68,6 +68,7 @@ services:
       service: ledger
     environment:
       - "SERVICE=ledger"
+      - PUBLISHERS_TAKEOVER
     depends_on:
       - mongo
       - redis
@@ -136,7 +137,6 @@ services:
       - GRANT_WALLET_PUBLIC_KEY
       - TOKEN_LIST
       - UPHOLD_ACCESS_TOKEN
-      - PUBLISHERS_TAKEOVER
     depends_on:
       - mongo
       - grant-redis

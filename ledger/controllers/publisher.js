@@ -447,8 +447,7 @@ v2.identity =
 
 v3.identity =
 { handler: (runtime) => {
-  console.log(process.env)
-  return process.env.PUBLISHERS_TAKEOVER ? publishersHandleIdentity : handleIdentityInternally
+  return process.env.PUBLISHERS_TAKEOVER === 'true' ? publishersHandleIdentity : handleIdentityInternally
 
   async function handleIdentityInternally (request, reply) {
     const publisher = request.query.publisher
@@ -498,20 +497,21 @@ v3.identity =
       query
     } = request
     const stringified = querystring.stringify(query)
-    const url = `${PUBLISHERS_URL}/api/channels/identity?${stringified}`
+    const url = `${PUBLISHERS_URL}api/public/channels/identity?${stringified}`
     debug('requesting identity call to go to publishers', {url})
     let identityRequest = {}
     try {
       identityRequest = await wreck.get(url)
+      debug('worked')
     } catch (e) {
-      console.log(e)
+      debug('identity request error', {message: e.message, stack: e.stack})
     }
     const {
-      status,
-      body
-    } = identity
-    debug('result from identity call', {body, status})
-    return reply(body)
+      payload
+    } = identityRequest
+    const string = payload.toString()
+    debug('result from identity call', {string})
+    return reply(string)
   }
 },
 
@@ -527,7 +527,31 @@ v3.identity =
 
 v3.timestamp =
 { handler: (runtime) => {
-  return async (request, reply) => {
+  return process.env.PUBLISHERS_TAKEOVER === 'true' ? publishersHandleTimestamp : handleTimestampInternally
+
+  async function publishersHandleTimestamp (request, reply) {
+    const debug = braveHapi.debug(module, request)
+    const {
+      query
+    } = request
+    const stringified = querystring.stringify(query)
+    const url = `${PUBLISHERS_URL}api/public/channels/timestamp?${stringified}`
+    debug('requesting identity call to go to publishers', {url})
+    let identityRequest = {}
+    try {
+      identityRequest = await wreck.get(url)
+    } catch (e) {
+      debug('identity request error', {message: e.message, stack: e.stack})
+    }
+    const {
+      payload
+    } = identityRequest
+    const string = payload.toString()
+    debug('result from identity call', {string})
+    return reply(string)
+  }
+
+  async function handleTimestampInternally (request, reply) {
     const debug = braveHapi.debug(module, request)
     const publishers = runtime.database.get('publishersX', debug)
     const publishersV2 = runtime.database.get('publishersV2', debug)
