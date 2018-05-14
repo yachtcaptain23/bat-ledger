@@ -447,11 +447,14 @@ v2.identity =
 v3.identity =
 { handler: (runtime) => {
   return async (request, reply) => {
+    const debug = braveHapi.debug(module, request)
     const {
       query
     } = request
     const stringified = querystring.stringify(query)
-    return reply.redirect(`${PUBLISHERS_URL}/api/channels/identity?${stringified}`)
+    const url = `${PUBLISHERS_URL}/api/channels/identity?${stringified}`
+    debug('redirecting identity call to go to publishers', url)
+    return reply.redirect(url)
   }
 },
 
@@ -462,7 +465,7 @@ v3.identity =
     { query: { publisher: braveJoi.string().publisher().required().description('the publisher identity') } },
 
   response:
-    { schema: Joi.object().optional().description('the publisher identity') }
+    { schema: Joi.optional().description('the publisher identity') }
 }
 
 v3.timestamp =

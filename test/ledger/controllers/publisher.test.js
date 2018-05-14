@@ -15,11 +15,12 @@ import {
   req,
   ok,
   ledger as domain
-} from './setup.test'
+} from '../../setup.test'
 import dotenv from 'dotenv'
 dotenv.config()
 
 test('test should redirect to publishers', async t => {
+  const domain = process.env.BAT_LEDGER_SERVER
   t.plan(0)
   const publisher = 'espn.com'
   const query = {
