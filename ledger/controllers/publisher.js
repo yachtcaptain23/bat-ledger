@@ -497,7 +497,7 @@ v3.identity =
       query
     } = request
     const stringified = querystring.stringify(query)
-    const url = `${PUBLISHERS_URL}api/public/channels/identity?${stringified}`
+    const url = `${PUBLISHERS_URL}api/channels/identity?${stringified}`
     debug('requesting identity call to go to publishers', {url})
     let identityRequest = {}
     try {

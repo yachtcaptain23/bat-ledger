@@ -879,8 +879,9 @@ const getToken = async (request, reply, runtime, owner, publisher, backgroundP) 
   const debug = braveHapi.debug(module, request)
   const tokens = runtime.database.get('tokens', debug)
   let data, entries, hint, i, info, j, matchP, pattern, reason, rr, rrset
-
+  debug('check publishers', { publisher })
   entries = await tokens.find({ publisher: publisher })
+  debug('gotten entries', { entries })
   if (entries.length === 0) return reply(boom.notFound('no such publisher: ' + publisher))
 
   for (let entry of entries) {
@@ -890,7 +891,7 @@ const getToken = async (request, reply, runtime, owner, publisher, backgroundP) 
       return reply({ status: 'success', verificationId: entry.verificationId })
     }
   }
-
+  debug('try txt resolver')
   try { rrset = await dnsTxtResolver(publisher) } catch (ex) {
     reason = ex.toString()
     if (reason.indexOf('ENODATA') === -1) {
@@ -959,7 +960,11 @@ const getToken = async (request, reply, runtime, owner, publisher, backgroundP) 
     }
   }
 
-  reply({ status: 'failure' })
+  debug('deferring to publishers', { publisher })
+  const {
+    PUBLISHERS_URL = 'https://publishers-staging.basicattentiontoken.org'
+  } = process.env
+  await reply.redirect(`${PUBLISHERS_URL}/api/channels/${publisher}/verification_status`)
 }
 
 const hints = {

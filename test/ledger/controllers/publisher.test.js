@@ -38,3 +38,18 @@ test('test should redirect to publishers', async t => {
   } = result
   console.log(body)
 })
+
+test('test should redirect to publishers', async t => {
+  const domain = process.env.BAT_LEDGER_SERVER
+  t.plan(0)
+  const url = `/v3/publisher/timestamp`
+  const result = await req({
+    domain,
+    expect: 200,
+    url
+  })
+  const {
+    body
+  } = result
+  console.log(body)
+})
