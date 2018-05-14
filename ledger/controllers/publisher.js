@@ -447,6 +447,7 @@ v2.identity =
 
 v3.identity =
 { handler: (runtime) => {
+  console.log(process.env)
   return process.env.PUBLISHERS_TAKEOVER ? publishersHandleIdentity : handleIdentityInternally
 
   async function handleIdentityInternally (request, reply) {

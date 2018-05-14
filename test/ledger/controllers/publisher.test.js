@@ -28,9 +28,13 @@ test('test should redirect to publishers', async t => {
   }
   const qs = stringify(query)
   const url = `/v3/publisher/identity?${qs}`
-  await req({
+  const result = await req({
     domain,
     expect: 200,
     url
   })
+  const {
+    body
+  } = result
+  console.log(body)
 })
