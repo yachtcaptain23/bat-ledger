@@ -580,9 +580,9 @@ v3.timestamp =
   validate: {},
 
   response: {
-    schema: Joi.object().keys({
-      timestamp: Joi.string().regex(/^[0-9]+$/).required().description('an opaque, monotonically-increasing value')
-    }).unknown(true).description('information about the most recent publisher timestamp')
+    // schema: Joi.object().keys({
+    //   timestamp: Joi.string().regex(/^[0-9]+$/).required().description('an opaque, monotonically-increasing value')
+    // }).unknown(true).description('information about the most recent publisher timestamp')
   }
 }
 
