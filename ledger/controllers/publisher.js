@@ -499,19 +499,31 @@ v3.identity =
     const stringified = querystring.stringify(query)
     const url = `${PUBLISHERS_URL}api/public/channels/identity?${stringified}`
     debug('requesting identity call to go to publishers', {url})
-    let identityRequest = {}
+    let body = ''
     try {
-      identityRequest = await wreck.get(url)
-      debug('worked')
+      const identityRequest = await wreck.get(url)
+      debug('identity request status', {status: identityRequest.status})
+      body = await wreck.read(identityRequest)
     } catch (e) {
       debug('identity request error', {message: e.message, stack: e.stack})
+      // assume it's good data
+      return reply(boom.notFound(e.message))
+    }
+    const string = body.toString()
+    let json = {}
+    if (string) {
+      json = JSON.parse(string)
     }
     const {
-      payload
-    } = identityRequest
-    const string = payload.toString()
-    debug('result from identity call', {string})
-    return reply(string)
+      errors
+    } = json
+    const error = errors && errors[0]
+    if (error) {
+      debug('error sent back from identity', {json})
+      return reply(boom.badData(error))
+    }
+    debug('result from identity call', {json})
+    return reply(json)
   }
 },
 
@@ -536,19 +548,31 @@ v3.timestamp =
     } = request
     const stringified = querystring.stringify(query)
     const url = `${PUBLISHERS_URL}api/public/channels/timestamp?${stringified}`
-    debug('requesting identity call to go to publishers', {url})
-    let identityRequest = {}
+    debug('requesting timestamp call to go to publishers', {url})
+    let body = ''
     try {
-      identityRequest = await wreck.get(url)
+      const timestampRequest = await wreck.get(url)
+      debug('publishers/timestamp request status', {status: timestampRequest.status})
+      body = await wreck.read(timestampRequest)
     } catch (e) {
-      debug('identity request error', {message: e.message, stack: e.stack})
+      debug('publishers/timestamp request error', {message: e.message, stack: e.stack})
+      return reply(boom.notFound(e.message))
+    }
+    const string = body.toString()
+    let json = {}
+    if (string) {
+      json = JSON.parse(string)
     }
     const {
-      payload
-    } = identityRequest
-    const string = payload.toString()
-    debug('result from identity call', {string})
-    return reply(string)
+      errors
+    } = json
+    const error = errors && errors[0]
+    if (error) {
+      debug('error sent back from publishers/timestamp', {json})
+      return reply(boom.badData(error))
+    }
+    debug('result from publishers/timestamp call', {json})
+    return reply(json)
   }
 
   async function handleTimestampInternally (request, reply) {
