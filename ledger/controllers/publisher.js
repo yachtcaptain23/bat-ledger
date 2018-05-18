@@ -13,8 +13,6 @@ const utils = require('bat-utils')
 const braveHapi = utils.extras.hapi
 const braveJoi = utils.extras.joi
 
-const PUBLISHERS_URL = process.env.PUBLISHERS_URL
-
 const v1 = {}
 const v2 = {}
 const v3 = {}
@@ -497,33 +495,40 @@ v3.identity =
       query
     } = request
     const stringified = querystring.stringify(query)
-    const url = `${PUBLISHERS_URL}api/public/channels/identity?${stringified}`
-    debug('requesting identity call to go to publishers', {url})
-    let body = ''
-    try {
-      const identityRequest = await wreck.get(url)
-      debug('identity request status', {status: identityRequest.status})
-      body = await wreck.read(identityRequest)
-    } catch (e) {
-      debug('identity request error', {message: e.message, stack: e.stack})
-      // assume it's good data
-      return reply(boom.notFound(e.message))
+    const baseUrl = process.env.PUBLISHERS_URL
+    const PUBLISHERS_TOKEN = process.env.PUBLISHERS_TOKEN
+    const headers = {
+      'Content-Type': 'application/json'
     }
-    const string = body.toString()
-    let json = {}
-    if (string) {
-      json = JSON.parse(string)
+    const url = `/api/public/channels/identity?${stringified}`
+    const isDev = process.env.ENV === 'development'
+    debug('requesting identity call to go to publishers', {url})
+    const options = isDev ? {
+      rejectUnauthorized: false,
+      json: true,
+      baseUrl,
+      headers
+    } : {
+      baseUrl,
+      json: true,
+      headers: Object.assign({
+        Authorization: `Token token=${PUBLISHERS_TOKEN}`
+      }, headers)
     }
     const {
+      payload,
+      body
+    } = await wreck.get(url, options)
+    const {
       errors
-    } = json
+    } = payload
     const error = errors && errors[0]
     if (error) {
-      debug('error sent back from identity', {json})
+      debug('error sent back from identity', {payload})
       return reply(boom.badData(error))
     }
-    debug('result from identity call', {json})
-    return reply(json)
+    debug('result from identity call', {payload})
+    return reply(payload)
   }
 },
 
@@ -539,21 +544,43 @@ v3.identity =
 
 v3.timestamp =
 { handler: (runtime) => {
-  return process.env.PUBLISHERS_TAKEOVER === 'true' ? publishersHandleTimestamp : handleTimestampInternally
-
+  // return process.env.PUBLISHERS_TAKEOVER === 'true' ? publishersHandleTimestamp : handleTimestampInternally
+  return handleTimestampInternally
+  /*eslint-disable no-unused-vars*/
   async function publishersHandleTimestamp (request, reply) {
     const debug = braveHapi.debug(module, request)
     const {
       query
     } = request
     const stringified = querystring.stringify(query)
-    const url = `${PUBLISHERS_URL}api/public/channels/timestamp?${stringified}`
+    const baseUrl = process.env.PUBLISHERS_URL
+    const PUBLISHERS_TOKEN = process.env.PUBLISHERS_TOKEN
+    const url = `/api/public/channels/timestamp?${stringified}`
     debug('requesting timestamp call to go to publishers', {url})
     let body = ''
+    const headers = {
+      'Content-Type': 'application/json'
+    }
+    let identityRequest = {}
     try {
-      const timestampRequest = await wreck.get(url)
+      if (process.env.ENV === 'development') {
+        timestampRequest = await wreck.get(url, {
+          rejectUnauthorized: false,
+          baseUrl,
+          headers
+        })
+      } else {
+        timestampRequest = await wreck.get(url, {
+          baseUrl,
+          headers: Object.assign({
+            Authorization: `Token token=${PUBLISHERS_TOKEN}`
+          }, headers)
+        })
+      }
       debug('publishers/timestamp request status', {status: timestampRequest.status})
-      body = await wreck.read(timestampRequest)
+      body = await wreck.read(timestampRequest, {
+        json: true
+      })
     } catch (e) {
       debug('publishers/timestamp request error', {message: e.message, stack: e.stack})
       return reply(boom.notFound(e.message))
@@ -574,6 +601,7 @@ v3.timestamp =
     debug('result from publishers/timestamp call', {json})
     return reply(json)
   }
+  /*eslint-enable no-unused-vars*/
 
   async function handleTimestampInternally (request, reply) {
     const debug = braveHapi.debug(module, request)
